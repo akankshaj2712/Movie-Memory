@@ -1,24 +1,46 @@
-import { createFactForUser } from "@/lib/facts";
+import { getFactForUser, type FactResult } from "@/lib/facts";
+import { defaultFactDeps } from "@/lib/fact-store";
+import RefreshFactButton from "./refresh-fact-button";
 
-type Props = { userId: string; movie: string };
+const FALLBACK_ERROR: FactResult = {
+    status: "error",
+    message: "We couldn't come up with a fun fact right now. Please try again in a moment.",
+};
 
-export default async function FactCard({ userId, movie }: Props) {
-    let content: string | null = null;
+export default async function FactCard({ userId }: { userId: string }) {
+    const result = await getFactForUser(userId, defaultFactDeps).catch((err) => {
+        console.error("Fact service failed:", err);
+        return FALLBACK_ERROR;
+    });
 
-    try {
-        const fact = await createFactForUser(userId, movie);
-        content = fact.content;
-    } catch (err) {
-        console.error("Fact generation failed:", err);
-    }
-
-    if (!content) {
+    if (result.status !== "ok") {
+        const message =
+            result.status === "error" ? result.message : "Set a favorite movie to get a fact.";
         return (
-            <p className="text-sm text-red-600">
-                We couldn't come up with a fun fact right now. Refresh to try again.
-            </p>
+            <div className="space-y-3">
+                <p className="text-sm text-red-600">{message}</p>
+                <RefreshFactButton />
+            </div>
         );
     }
 
-    return <p className="text-gray-800">{content}</p>;
+    const ageSeconds = Math.max(
+        0,
+        Math.round((Date.now() - result.fact.createdAt.getTime()) / 1000)
+    );
+    const label = {
+        fresh: "New fact",
+        cache: `Cached · generated ${ageSeconds}s ago`,
+        fallback: "Showing your last saved fact (live service unavailable)",
+    }[result.source];
+
+    return (
+        <div className="space-y-3">
+            <p className="text-gray-800">{result.fact.content}</p>
+            <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">{label}</span>
+                <RefreshFactButton />
+            </div>
+        </div>
+    );
 }

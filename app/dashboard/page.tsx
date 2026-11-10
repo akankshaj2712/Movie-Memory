@@ -56,7 +56,7 @@ export default async function DashboardPage() {
                     <Suspense
                         fallback={<p className="animate-pulse text-gray-400">Thinking of a fun fact...</p>}
                     >
-                        <FactCard userId={user.id} movie={user.favoriteMovie} />
+                        <FactCard userId={user.id} />
                     </Suspense>
                 </section>
             </div>
