@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { signOut } from "@/auth";
 import { requireUser } from "@/lib/session";
+import { Suspense } from "react";
+import FactCard from "./fact-card";
 
 export default async function DashboardPage() {
     const user = await requireUser();
@@ -51,7 +53,11 @@ export default async function DashboardPage() {
 
                 <section className="rounded-2xl bg-white p-5 shadow">
                     <p className="text-sm text-gray-500">Fun fact</p>
-                    <p className="text-gray-400">Coming in the next step.</p>
+                    <Suspense
+                        fallback={<p className="animate-pulse text-gray-400">Thinking of a fun fact...</p>}
+                    >
+                        <FactCard userId={user.id} movie={user.favoriteMovie} />
+                    </Suspense>
                 </section>
             </div>
         </main>
